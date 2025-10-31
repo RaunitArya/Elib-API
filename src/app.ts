@@ -4,6 +4,8 @@ import userRouter from './users/userRouter.ts';
 
 const app = express();
 
+app.use(express.json());
+
 // Routes 
 app.get('/', (_req: express.Request, res: express.Response) => {
     res.json({message: "Welcome to API"})
