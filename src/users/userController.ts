@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config.ts";
 import { type User } from "./userTypes.ts";
-import { create } from "domain";
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const { name, email, password } = req.body;
@@ -47,10 +46,8 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
       expiresIn: "7d",
     });
   // Response
-  res.json({ accessToken: token });
+  res.status(201).json({ accessToken: token });
   } catch (error) {
     return next(createHttpError(500, "Error while signing JWT token"));
   }
 };
-
-export { createUser };
