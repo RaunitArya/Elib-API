@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import { createBook, readBook, updateBook, deleteBook } from './bookController.ts';
 import multer from 'multer';
+import authenticate from '../middlewares/authenticate.ts';
 
 const bookRouter = express.Router();
 
@@ -16,7 +17,7 @@ const uploadMiddleware = upload.fields([
 ])
 
 // Routes
-bookRouter.post('/', uploadMiddleware, createBook); 
+bookRouter.post('/',authenticate, uploadMiddleware, createBook); 
 bookRouter.post('/read', readBook);
 bookRouter.post('/update', updateBook);
 bookRouter.post('/delete', deleteBook);
