@@ -2,7 +2,7 @@ import express from "express";
 import path from "node:path";
 import {
   createBook,
-  readBook,
+  listBooks,
   updateBook,
   deleteBook,
 } from "./bookController.ts";
@@ -24,6 +24,7 @@ const uploadMiddleware = upload.fields([
 // Routes
 bookRouter.post("/", authenticate, uploadMiddleware, createBook);
 bookRouter.patch("/:bookId", authenticate, uploadMiddleware, updateBook);
+bookRouter.get("/", listBooks);
 bookRouter.post("/delete", deleteBook);
 
 export default bookRouter;

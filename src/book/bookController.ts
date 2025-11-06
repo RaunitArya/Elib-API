@@ -74,8 +74,14 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const readBook = async (req: Request, res: Response, next: NextFunction) => {
-  res.json({});
+const listBooks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // todo: Add Pagination
+    const book = await bookModel.find();
+    res.json({ book });
+  } catch (err) {
+    return next(createHttpError(500, "Error while fetching books"));
+  }
 };
 
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
@@ -159,4 +165,4 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
   res.json({});
 };
 
-export { createBook, readBook, updateBook, deleteBook };
+export { createBook, listBooks, updateBook, deleteBook };
