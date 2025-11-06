@@ -27,6 +27,6 @@ bookRouter.post("/", authenticate, uploadMiddleware, createBook);
 bookRouter.patch("/:bookId", authenticate, uploadMiddleware, updateBook);
 bookRouter.get("/", listBooks);
 bookRouter.get("/:bookId", getSingleBook);
-bookRouter.post("/delete", deleteBook);
+bookRouter.delete("/:bookId", authenticate, deleteBook);
 
 export default bookRouter;
