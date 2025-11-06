@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   createBook,
   listBooks,
+  getSingleBook,
   updateBook,
   deleteBook,
 } from "./bookController.ts";
@@ -25,6 +26,7 @@ const uploadMiddleware = upload.fields([
 bookRouter.post("/", authenticate, uploadMiddleware, createBook);
 bookRouter.patch("/:bookId", authenticate, uploadMiddleware, updateBook);
 bookRouter.get("/", listBooks);
+bookRouter.get("/:bookId", getSingleBook);
 bookRouter.post("/delete", deleteBook);
 
 export default bookRouter;
