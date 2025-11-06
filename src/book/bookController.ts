@@ -79,7 +79,80 @@ const readBook = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
-  res.json({});
+  const { title, genre } = req.body;
+  const bookId = req.params.bookId;
+
+  const book = await bookModel.findOne({ _id: bookId });
+
+  if (!book) {
+    return next(createHttpError(404, "Book not found"));
+  }
+
+  // Check Access
+  const _req = req as AuthRequest;
+  if (book.author.toString() !== _req.userId) {
+    return next(createHttpError(403, "No access"));
+  }
+
+  // Check if image file exists
+  const files = req.files as { [filename: string]: Express.Multer.File[] };
+  let completeCoverImage = "";
+  if (files.coverImage && files.coverImage[0]) {
+    const filename = files.coverImage[0].filename;
+    const coverMimeType = files.coverImage[0].mimetype.split("/").at(-1);
+
+    // send files to cloudinary
+    const filePath = path.join(
+      path.dirname(" ../../public/data/uploads"),
+      filename
+    );
+    completeCoverImage = filename as string;
+    const uploadResult = await cloudinary.uploader.upload(filePath, {
+      filename_override: completeCoverImage,
+      folder: "book-covers",
+      format: coverMimeType,
+    });
+
+    completeCoverImage = uploadResult.secure_url;
+    await fs.promises.unlink(filePath);
+  }
+
+  // Check if file field exists
+  let completeFileName = "";
+
+  if (files.file && files.file[0]) {
+    const bookFilePath = path.join(
+      path.dirname(" ../../public/data/uploads"),
+      files.file[0].filename
+    );
+    const bookfileName = files.file[0].filename;
+    completeFileName = bookfileName;
+
+    const uploadResultPDF = await cloudinary.uploader.upload(bookFilePath, {
+      resource_type: "raw",
+      filename_override: completeFileName,
+      folder: "book-covers",
+      format: "pdf",
+    });
+
+    completeFileName = uploadResultPDF.secure_url;
+    await fs.promises.unlink(bookFilePath);
+  }
+
+  const updatedBook = await bookModel.findOneAndUpdate(
+    {
+      _id: bookId,
+    },
+    {
+      title: title,
+      genre: genre,
+      coverImage: completeCoverImage ? completeCoverImage : book.coverImage,
+      file: completeFileName ? completeFileName : book.file,
+    },
+    { new: true }
+  );
+
+  res.json(updatedBook);
 };
 
 const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
