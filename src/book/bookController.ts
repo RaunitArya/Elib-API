@@ -4,7 +4,11 @@ import bookModel from "./bookModel.ts";
 import cloudinary from "../config/cloudinary.ts";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { AuthRequest } from "../middlewares/authenticate.ts";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
@@ -17,8 +21,9 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 
   // Cover Image's file name
   const fileName = files.coverImage[0].filename;
-  const filePath = path.join(
-    path.dirname(" ../../public/data/uploads"),
+  const filePath = path.resolve(
+    __dirname,
+    "../../public/data/uploads",
     fileName
   );
 
@@ -34,8 +39,9 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
       return next(createHttpError(400, "File is required"));
     }
     const BookFileName = files.file[0].filename;
-    const bookFilePath = path.join(
-      path.dirname(" ../../public/data/uploads"),
+    const bookFilePath = path.resolve(
+      __dirname,
+      "../../public/data/uploads",
       BookFileName
     );
 
@@ -125,8 +131,9 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     const coverMimeType = files.coverImage[0].mimetype.split("/").at(-1);
 
     // send files to cloudinary
-    const filePath = path.join(
-      path.dirname(" ../../public/data/uploads"),
+    const filePath = path.resolve(
+      __dirname,
+      "../../public/data/uploads",
       filename
     );
     completeCoverImage = filename as string;
@@ -144,8 +151,9 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   let completeFileName = "";
 
   if (files.file && files.file[0]) {
-    const bookFilePath = path.join(
-      path.dirname(" ../../public/data/uploads"),
+    const bookFilePath = path.resolve(
+      __dirname,
+      "../../public/data/uploads",
       files.file[0].filename
     );
     const bookfileName = files.file[0].filename;
@@ -198,7 +206,7 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
 
     const bookFileSplits = book.file.split("/");
     const bookFilePublicId =
-    bookFileSplits.at(-2) + "/" + bookFileSplits.at(-1);
+      bookFileSplits.at(-2) + "/" + bookFileSplits.at(-1);
 
     // Delete files from cloudinary
     try {
@@ -207,12 +215,14 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
         resource_type: "raw",
       });
     } catch (err) {
-      return next(createHttpError(500, "Error while deleting file & cover image"));
+      return next(
+        createHttpError(500, "Error while deleting file & cover image")
+      );
     }
 
     // Delete book from db
-    await bookModel.deleteOne({_id: id});
-    res.sendStatus(204);    
+    await bookModel.deleteOne({ _id: id });
+    res.sendStatus(204);
   } catch (err) {
     return next(createHttpError(500, "Error while deleting the book"));
   }
