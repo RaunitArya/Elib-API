@@ -74,8 +74,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     res.status(201).json({ id: newBook._id });
-  } catch (err) {
-    console.log(err);
+  } catch (err) {;
     return next(createHttpError(500, "Error while uploading the files"));
   }
 };
@@ -136,7 +135,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       "../../public/data/uploads",
       filename
     );
-    completeCoverImage = filename as string;
+    completeCoverImage = filename;
     const uploadResult = await cloudinary.uploader.upload(filePath, {
       filename_override: completeCoverImage,
       folder: "book-covers",
@@ -144,7 +143,11 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     });
 
     completeCoverImage = uploadResult.secure_url;
-    await fs.promises.unlink(filePath);
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (err) {
+      console.error("Failed to delete cover image temp file:", err);
+    }
   }
 
   // Check if file field exists
@@ -167,7 +170,11 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     });
 
     completeFileName = uploadResultPDF.secure_url;
-    await fs.promises.unlink(bookFilePath);
+    try {
+      await fs.promises.unlink(bookFilePath);
+    } catch (err) {
+      console.error("Failed to delete book file temp file:", err);
+    }
   }
 
   // Delete existing files in cloudinary
@@ -180,10 +187,12 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     bookFileSplits.at(-2) + "/" + bookFileSplits.at(-1);
 
   try {
-      await cloudinary.uploader.destroy(coverImagePublicId);
-      await cloudinary.uploader.destroy(bookFilePublicId, {
-        resource_type: "raw",
-      });
+      await Promise.all([
+        cloudinary.uploader.destroy(coverImagePublicId),
+        cloudinary.uploader.destroy(bookFilePublicId, {
+          resource_type: "raw",
+        }),
+      ]);
     } catch (err) {
       return next(
         createHttpError(500, "Error while deleting file & cover image")
