@@ -140,7 +140,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     const uploadResult = await cloudinary.uploader.upload(filePath, {
       filename_override: completeCoverImage,
       folder: "book-covers",
-      format: coverMimeType,
+      ...(coverMimeType && { format: coverMimeType }),
     });
 
     completeCoverImage = uploadResult.secure_url;
@@ -169,6 +169,26 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     completeFileName = uploadResultPDF.secure_url;
     await fs.promises.unlink(bookFilePath);
   }
+
+  // Delete existing files in cloudinary
+  const coverFileSplits = book.coverImage.split("/");
+  const coverImagePublicId =
+    coverFileSplits.at(-2) + "/" + coverFileSplits.at(-1)?.split(".").at(-2);
+
+  const bookFileSplits = book.file.split("/");
+  const bookFilePublicId =
+    bookFileSplits.at(-2) + "/" + bookFileSplits.at(-1);
+
+  try {
+      await cloudinary.uploader.destroy(coverImagePublicId);
+      await cloudinary.uploader.destroy(bookFilePublicId, {
+        resource_type: "raw",
+      });
+    } catch (err) {
+      return next(
+        createHttpError(500, "Error while deleting file & cover image")
+      );
+    }
 
   const updatedBook = await bookModel.findOneAndUpdate(
     {
